@@ -175,6 +175,10 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* 画像スライダー用のクラス */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         /* ダブルタップスキップのアニメーション */
         @keyframes rippleEffect {
             0% { transform: scale(0.6); opacity: 1; }
@@ -275,9 +279,35 @@
             <!-- プレイヤー領域 -->
             <div id="playerColumn" class="lg:col-span-2 space-y-5 sm:space-y-6 transition-all duration-300">
                 <div id="videoContainer" class="relative w-full aspect-video bg-black rounded-theme overflow-hidden shadow-2xl border border-brandBorder group transition-all duration-300">
+                    
+                    <!-- 1. 動画プレイヤー -->
                     <video id="mainPlayer" class="w-full h-full object-contain" playsinline>
                         <source id="playerSource" src="" type="video/mp4">
                     </video>
+
+                    <!-- 2. 画像ビューア (スワイプ対応) -->
+                    <div id="imageViewer" class="absolute inset-0 z-[25] hidden bg-black flex-col overflow-hidden">
+                        <!-- スライドトラック -->
+                        <div id="imageTrack" class="flex w-full h-full transition-transform duration-300 ease-out touch-pan-y">
+                            <!-- JSで img が挿入されます -->
+                        </div>
+                        
+                        <!-- 左右ナビゲーション (PC用) -->
+                        <button id="prevImgBtn" onclick="prevImage(event)" class="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0 z-30 shadow-lg">
+                            <i data-lucide="chevron-left" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                        </button>
+                        <button id="nextImgBtn" onclick="nextImage(event)" class="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0 z-30 shadow-lg">
+                            <i data-lucide="chevron-right" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                        </button>
+                        
+                        <!-- ページネーションインジケーター -->
+                        <div id="imageIndicators" class="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-30"></div>
+                        
+                        <!-- 画像枚数表示 -->
+                        <div class="absolute top-4 right-4 bg-black/60 backdrop-blur text-white text-xs font-mono px-3 py-1.5 rounded-full z-30 shadow-lg border border-white/10">
+                            <span id="currentImgNum">1</span> / <span id="totalImgNum">1</span>
+                        </div>
+                    </div>
 
                     <!-- ダブルタップ（スマホスキップ）検出＆表示オーバーレイ -->
                     <div id="touchGestureOverlay" class="absolute inset-0 z-20 flex pointer-events-auto">
@@ -359,7 +389,7 @@
                             <button onclick="shareVideo()" class="flex items-center gap-1.5 px-4 py-3 bg-brandBg border border-brandBorder hover:border-brandAccent active:scale-95 transition-all rounded-full text-xs font-bold text-brandText shadow-md min-h-[44px]">
                                 <i data-lucide="share-2" class="w-4 h-4 text-blue-400"></i><span>共有する</span>
                             </button>
-                            <button id="downloadBtn" onclick="downloadVideo()" class="flex items-center gap-1.5 px-4 py-3 bg-brandBg border border-brandBorder hover:border-brandAccent active:scale-95 transition-all rounded-full text-xs font-bold text-brandText shadow-md min-h-[44px]">
+                            <button id="downloadBtn" onclick="downloadMedia()" class="flex items-center gap-1.5 px-4 py-3 bg-brandBg border border-brandBorder hover:border-brandAccent active:scale-95 transition-all rounded-full text-xs font-bold text-brandText shadow-md min-h-[44px]">
                                 <i data-lucide="download" class="w-4 h-4 text-green-400"></i><span id="downloadBtnText">ダウンロード</span>
                             </button>
                         </div>
@@ -410,7 +440,7 @@
 
         <footer id="mainFooter" class="bg-brandHeader border-t border-brandBorder py-6 mt-8 transition-all duration-500">
             <div class="max-w-7xl mx-auto px-4 text-center space-y-1">
-                <p class="text-xs text-brandMuted">&copy; 2026 The Na-Na-Ni Perfect Collection</p>
+                <p class="text-xs text-brandMuted">&copy; 2026 <a href="https://minecraft-jp.github.io/GVN-Organization/" target="_blank" class="gradient underline font-bold hover:opacity-80 transition-opacity">GVN Organization</a>\nCopyright ©︎ GVN ORG</p>
             </div>
         </footer>
     </div>
@@ -620,7 +650,7 @@
                 <div class="flex justify-between items-center bg-brandBg p-3 rounded-xl border border-brandBorder"><span class="text-brandMuted font-mono">T</span><span class="font-bold text-brandText">大画面モード切替</span></div>
                 <div class="flex justify-between items-center bg-brandBg p-3 rounded-xl border border-brandBorder"><span class="text-brandMuted font-mono">F</span><span class="font-bold text-brandText">全画面表示</span></div>
                 <div class="flex justify-between items-center bg-brandBg p-3 rounded-xl border border-brandBorder"><span class="text-brandMuted font-mono">M</span><span class="font-bold text-brandText">ミュート切り替え</span></div>
-                <div class="flex justify-between items-center bg-brandBg p-3 rounded-xl border border-brandBorder"><span class="text-brandMuted font-mono">← / →</span><span class="font-bold text-brandText">5秒前へ / 5秒先へ</span></div>
+                <div class="flex justify-between items-center bg-brandBg p-3 rounded-xl border border-brandBorder"><span class="text-brandMuted font-mono">← / →</span><span class="font-bold text-brandText">5秒移動 / 画像切替</span></div>
                 <div class="flex justify-between items-center bg-brandBg p-3 rounded-xl border border-brandBorder"><span class="text-brandMuted font-mono">↑ / ↓</span><span class="font-bold text-brandText">音量 5% 変更</span></div>
             </div>
             <button onclick="closeShortcutsModal()" class="w-full py-3 bg-brandBg border border-brandBorder hover:border-brandAccent text-brandText rounded-xl text-xs font-bold transition-all">閉じる</button>
@@ -846,11 +876,15 @@
         }
 
         const dummyLocalDB = [
-            { username: "Sigh", password: "hahdhdhejjejdjj28¥:¥;¥388:¥.¥.¥:!291uwujd" }
+            { username: "櫻井結太", password: "7k#B9vP2@mR5zLwQ" },
+            { username: "髙橋浬", password: "HK~kEf|zFji,MU8U/4$$a2R8Ruu$!7" },
+            { username: "ピンゴリ", password: "Pingoli" },
+            { username: "とある人", password: "Jk9-mP3*zL5#bR7$w" }
         ];
 
         const externalLinks = [
-             { no: 1, title: "The._.Sigh", url: "https://minecraft-jp.github.io/The._.Sigh/", icon: "", color: "white", borderColor: "blue" },
+            { no: 1, title: "ななにー", url: "https://minecraft-jp.github.io/Nanani-URL-Shortener/", icon: "", color: "white", borderColor: "#ec4899" },
+           { no: 2, title: "素人", url: "https://minecraft-jp.github.io/Sirouto/", icon: "", color: "white", borderColor: "#ec4899" }
         ];
 
         function getStoredData(key, defaultVal) {
@@ -881,6 +915,9 @@
             setupKeyboardShortcuts();
             setupDoubleTapGestures();
             setupAutoFadeControls();
+            
+            // 画像スワイプイベントの登録
+            setupImageSwipeEvents();
         };
 
         const loaderMessages = [
@@ -959,7 +996,7 @@
             userResumeTimes = getStoredData('cinemastream_resumes_' + currentUser, {});
 
             window.currentUser = currentUser;
-            syncUserDataFromCloud();
+            syncUserDataFromCloud(); // Firebase機能の維持
 
             document.getElementById('headerUsername').textContent = username;
             document.getElementById('loginScreen').classList.add('hidden');
@@ -1099,7 +1136,7 @@
                     const el = document.createElement('div');
                     el.className = "flex items-center justify-between p-3 bg-brandBg rounded-xl border border-brandBorder cursor-pointer hover:border-brandAccent transition-all";
                     el.onclick = () => {
-                        loadVideo(v.id);
+                        loadMedia(v.id);
                         closeHistoryModal();
                     };
                     el.innerHTML = `
@@ -1168,7 +1205,7 @@
                     const el = document.createElement('div');
                     el.className = "flex items-center justify-between p-3 bg-brandBg rounded-xl border border-brandBorder";
                     el.innerHTML = `
-                        <div class="flex items-center gap-3 min-w-0 cursor-pointer flex-grow" onclick="loadVideo(${v.id}); closeWatchLaterModal();">
+                        <div class="flex items-center gap-3 min-w-0 cursor-pointer flex-grow" onclick="loadMedia(${v.id}); closeWatchLaterModal();">
                             <img src="${v.thumbnail}" class="w-16 h-10 object-contain bg-black rounded border border-brandBorder flex-shrink-0">
                             <div class="min-w-0">
                                 <p class="text-xs font-bold text-brandText truncate">${v.title}</p>
@@ -1264,9 +1301,36 @@
             lucide.createIcons();
         }
 
+        // ================= データ構造 (動画と画像の混在) =================
         const videos = [
-            { id: 1, title: "友達のちんぽ", url: "https://fly19.gigafile.nu/view_data.php?file=1106-0b6615c7284a53d698966eae4e542de5&path=./upload/E/1106-0b6615c7284a53d698966eae4e542de5/IMG_6896.mov", thumbnail: "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/photo-output.png", duration: "0:25", date: "2026/07/28", desc: "管理者が友達の服を無理やり脱がせた動画。\n#jc #友達 #ちんこ #勃起 #1 " },
-            { id: 2, title: "友達のちんぽ(画像)", url: "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6989.png", thumbnail: "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/photo-output.png", duration: "", date: "2026/07/28", desc: "管理者が友達の服を無理やり脱がせた時のお気に入り場面の写真。\n#jc #友達 #ちんこ #勃起 #2 " }
+            { id: 1, 
+                type: "video",
+                title: "友達のちんぽ(第一弾)", 
+                url: "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/video-output-3D6FB81D-6A3E-4440-8107-77FF0486D51A-1.mov", 
+                thumbnail: "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/photo-output.png", 
+                duration: "0:25", 
+                date: "2026/07/28", 
+                desc: "友達が管理者の服を脱がそうとしてきたため、逆に友達の服そ脱がせた動画。\n#jc #友達 #ちんこ #勃起 #1 " 
+            },
+            { 
+                id: 2, 
+                type: "image", 
+                title: "友達のちんぽ(第二弾)", 
+                images: [
+                    "",
+                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6989.png",
+                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6990.png",
+                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6991.png",
+                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6992.png",
+                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6993.png",
+                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6893.jpeg",
+                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6895.jpeg",
+                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_7011.jpeg"
+                ],
+                thumbnail: "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_1223.jpeg", 
+                duration: "8枚", 
+                date: "2026/07/31", 
+                desc: "友達が管理者の服を脱がそうとしてきたため、逆に友達の服そ脱がせたお気に入り画像。\n#新機能 #写真 #友達 #勃起 #jc " }
         ];
 
         let activeId = 1;
@@ -1293,7 +1357,7 @@
             
             const originalAutoPlay = appConfig.autoPlay;
             appConfig.autoPlay = false; 
-            loadVideo(activeId);
+            loadMedia(activeId); // 変更：loadVideo から loadMediaへ
             appConfig.autoPlay = originalAutoPlay;
             
             renderPlaylist();
@@ -1324,32 +1388,152 @@
             handleSearch();
         }
 
-        function loadVideo(id) {
+        // ================= 動画/画像切り替えロジック =================
+        function loadMedia(id) {
             const v = videos.find(item => item.id === id);
             if (!v) return;
             activeId = id;
-            playerSrc.src = v.url;
-            player.poster = v.thumbnail;
-            player.load();
             
-            player.playbackRate = appConfig.playbackRate;
-            
+            // 共通の情報更新
             vTitle.textContent = v.title;
             vDate.textContent = `公開日: ${v.date}`;
             vDesc.innerHTML = formatHashtags(v.desc);
             renderPlaylist();
-            videoSpinner.classList.remove("hidden");
-            updateSeekBarUI(0);
             updateWatchLaterBtnUI();
             recordHistory(v.id);
 
-            const savedTime = userResumeTimes[v.id] || 0;
-            if (savedTime > 5) {
-                pendingResumeTime = savedTime;
-                document.getElementById('resumeTimeText').textContent = `再生位置: ${formatTime(savedTime)}`;
-                document.getElementById('resumeModal').classList.remove('hidden');
+            const imageViewer = document.getElementById('imageViewer');
+            const controls = document.getElementById('playerControls');
+            const touchOverlay = document.getElementById('touchGestureOverlay');
+
+            if (v.type === 'image' || v.images) {
+                // 画像モード
+                if (player) player.pause();
+                player.classList.add('hidden');
+                controls.classList.add('hidden');
+                touchOverlay.classList.add('hidden');
+                
+                imageViewer.classList.remove('hidden');
+                imageViewer.classList.add('flex');
+                
+                setupImageViewer(v.images);
             } else {
-                startVideoPlayback();
+                // 動画モード
+                imageViewer.classList.add('hidden');
+                imageViewer.classList.remove('flex');
+                
+                player.classList.remove('hidden');
+                controls.classList.remove('hidden');
+                touchOverlay.classList.remove('hidden');
+
+                playerSrc.src = v.url;
+                player.poster = v.thumbnail;
+                player.load();
+                
+                player.playbackRate = appConfig.playbackRate;
+                videoSpinner.classList.remove("hidden");
+                updateSeekBarUI(0);
+
+                // レジューム処理 (動画のみ)
+                const savedTime = userResumeTimes[v.id] || 0;
+                if (savedTime > 5) {
+                    pendingResumeTime = savedTime;
+                    document.getElementById('resumeTimeText').textContent = `再生位置: ${formatTime(savedTime)}`;
+                    document.getElementById('resumeModal').classList.remove('hidden');
+                } else {
+                    startVideoPlayback();
+                }
+            }
+        }
+
+        // ================= 画像スライダーの制御 =================
+        let currentImageIndex = 0;
+        let currentImages = [];
+
+        function setupImageViewer(images) {
+            currentImages = images;
+            currentImageIndex = 0;
+            
+            const track = document.getElementById('imageTrack');
+            const indicators = document.getElementById('imageIndicators');
+            document.getElementById('totalImgNum').textContent = images.length;
+            
+            track.innerHTML = '';
+            indicators.innerHTML = '';
+            
+            images.forEach((src, idx) => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.className = 'w-full h-full object-contain flex-shrink-0 select-none';
+                img.ondragstart = () => false; // ドラッグ防止
+                track.appendChild(img);
+                
+                const dot = document.createElement('div');
+                dot.className = `h-2 rounded-full transition-all duration-300 ${idx === 0 ? 'bg-brandAccent w-4' : 'bg-white/50 w-2'}`;
+                indicators.appendChild(dot);
+            });
+            
+            updateImageViewer();
+        }
+
+        function updateImageViewer() {
+            const track = document.getElementById('imageTrack');
+            track.style.transform = `translateX(-${currentImageIndex * 100}%)`;
+            
+            document.getElementById('currentImgNum').textContent = currentImageIndex + 1;
+            
+            const dots = document.getElementById('imageIndicators').children;
+            for (let i = 0; i < dots.length; i++) {
+                if (i === currentImageIndex) {
+                    dots[i].className = 'h-2 rounded-full bg-brandAccent transition-all duration-300 w-4';
+                } else {
+                    dots[i].className = 'h-2 rounded-full bg-white/50 transition-all duration-300 w-2';
+                }
+            }
+            
+            document.getElementById('prevImgBtn').disabled = currentImageIndex === 0;
+            document.getElementById('nextImgBtn').disabled = currentImageIndex === currentImages.length - 1;
+        }
+
+        function prevImage(e) {
+            if(e) e.stopPropagation();
+            if (currentImageIndex > 0) {
+                currentImageIndex--;
+                updateImageViewer();
+            }
+        }
+        
+        function nextImage(e) {
+            if(e) e.stopPropagation();
+            if (currentImageIndex < currentImages.length - 1) {
+                currentImageIndex++;
+                updateImageViewer();
+            }
+        }
+
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        function setupImageSwipeEvents() {
+            const viewer = document.getElementById('imageViewer');
+            viewer.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, {passive: true});
+            
+            viewer.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+        }
+        
+        function handleSwipe() {
+            const diffX = touchStartX - touchEndX;
+            const threshold = 40; 
+            
+            if (diffX > threshold) {
+                nextImage();
+            } else if (diffX < -threshold) {
+                prevImage();
             }
         }
 
@@ -1418,7 +1602,7 @@
             const finalShareUrl = `https://minecraft-jp.github.io/The._.Sigh/`;
             if (navigator.share) {
                 try {
-                    await navigator.share({ title: "ななにー流出", text: "ななにー流出", url: finalShareUrl });
+                    await navigator.share({ title: "Friends", text: "Friends", url: finalShareUrl });
                     showToast("共有メニューを開きました", 'share');
                 } catch (error) {}
             } else {
@@ -1427,34 +1611,55 @@
             }
         }
 
-        async function downloadVideo() {
+        // ダウンロード機能 (画像・動画両対応)
+        async function downloadMedia() {
             const v = videos.find(item => item.id === activeId);
             if (!v) return;
-            const btn = document.getElementById("downloadBtn");
-            const txt = document.getElementById("downloadBtnText");
-            btn.disabled = true; txt.textContent = "準備中...";
-            try {
-                const res = await fetch(v.url);
-                if (!res.ok) throw new Error();
-                const len = +res.headers.get('Content-Length');
-                const reader = res.body.getReader();
-                let rec = 0, chunks = [];
-                while(true) {
-                    const {done, value} = await reader.read();
-                    if (done) break;
-                    chunks.push(value); rec += value.length;
-                    if (len) txt.textContent = `${Math.round((rec / len) * 100)}%`;
+
+            if (v.type === 'image' || v.images) {
+                // 画像モード時の保存処理
+                const imgUrl = currentImages[currentImageIndex];
+                try {
+                    const res = await fetch(imgUrl);
+                    const blob = await res.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = blobUrl; 
+                    a.download = `image_${activeId}_${currentImageIndex + 1}.jpg`;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+                    showToast("画像を保存しました", 'system');
+                } catch(e) {
+                    window.open(imgUrl, '_blank'); // Fetchできない場合は別タブで開く
                 }
-                const blob = new Blob(chunks, { type: "video/mp4" });
-                const blobUrl = URL.createObjectURL(blob);
-                const a = document.createElement("a"); a.href = blobUrl; a.download = v.url.substring(v.url.lastIndexOf('/') + 1) || `video_${activeId}.mp4`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-                showToast("ダウンロード開始", 'system');
-            } catch (e) {
-                openDownloadModal(v.url);
-            } finally {
-                btn.disabled = false; txt.textContent = "ダウンロード";
+            } else {
+                // 動画モード時の保存処理 (元コード完全維持)
+                const btn = document.getElementById("downloadBtn");
+                const txt = document.getElementById("downloadBtnText");
+                btn.disabled = true; txt.textContent = "準備中...";
+                try {
+                    const res = await fetch(v.url);
+                    if (!res.ok) throw new Error();
+                    const len = +res.headers.get('Content-Length');
+                    const reader = res.body.getReader();
+                    let rec = 0, chunks = [];
+                    while(true) {
+                        const {done, value} = await reader.read();
+                        if (done) break;
+                        chunks.push(value); rec += value.length;
+                        if (len) txt.textContent = `${Math.round((rec / len) * 100)}%`;
+                    }
+                    const blob = new Blob(chunks, { type: "video/mp4" });
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement("a"); a.href = blobUrl; a.download = v.url.substring(v.url.lastIndexOf('/') + 1) || `video_${activeId}.mp4`;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+                    showToast("ダウンロード開始", 'system');
+                } catch (e) {
+                    openDownloadModal(v.url);
+                } finally {
+                    btn.disabled = false; txt.textContent = "ダウンロード";
+                }
             }
         }
 
@@ -1561,15 +1766,18 @@
 
             filtered.forEach(v => {
                 const isActive = v.id === activeId;
+                const isImage = v.type === 'image';
                 const card = document.createElement("div");
                 card.onclick = () => {
-                    if(!isActive) loadVideo(v.id);
+                    if(!isActive) loadMedia(v.id);
                 };
                 card.className = `group flex gap-3 p-3 rounded-2xl cursor-pointer transition-all border border-transparent ${ isActive ? "bg-brandBg border-brandBorder shadow-inner" : "bg-brandSurface/50 hover:bg-brandSurface hover:border-brandBorder" }`;
                 card.innerHTML = `
                     <div class="relative w-28 lg:w-32 h-16 bg-black rounded-xl overflow-hidden flex-shrink-0 border border-brandBorder">
                         <img class="absolute inset-0 w-full h-full object-contain transition-transform group-hover:scale-105" src="${v.thumbnail}">
-                        <span class="absolute bottom-1 right-1 bg-black/80 text-[9px] px-1 rounded font-mono text-white z-10">${v.duration}</span>
+                        <span class="absolute bottom-1 right-1 bg-black/80 text-[9px] px-1 rounded font-mono text-white z-10 flex items-center gap-1">
+                            ${isImage ? '<i data-lucide="image" class="w-2.5 h-2.5"></i>' : ''}${v.duration}
+                        </span>
                         ${isActive ? '<div class="absolute inset-0 bg-brandAccent/20 flex items-center justify-center z-20"><i data-lucide="play" class="w-5 h-5 text-brandAccent fill-current"></i></div>' : ''}
                     </div>
                     <div class="flex flex-col justify-between py-0.5 min-w-0">
@@ -1661,11 +1869,13 @@
             document.addEventListener('keydown', (e) => {
                 if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
 
+                const isImageMode = !document.getElementById('imageViewer').classList.contains('hidden');
+
                 switch (e.code) {
                     case 'Space':
                     case 'KeyK':
                         e.preventDefault();
-                        togglePlay();
+                        if(!isImageMode) togglePlay();
                         break;
                     case 'KeyT':
                         e.preventDefault();
@@ -1677,23 +1887,23 @@
                         break;
                     case 'KeyM':
                         e.preventDefault();
-                        muteBtn.click();
+                        if(!isImageMode) muteBtn.click();
                         break;
                     case 'ArrowLeft':
                         e.preventDefault();
-                        skipTime(-5);
+                        if (isImageMode) prevImage(); else skipTime(-5);
                         break;
                     case 'ArrowRight':
                         e.preventDefault();
-                        skipTime(5);
+                        if (isImageMode) nextImage(); else skipTime(5);
                         break;
                     case 'ArrowUp':
                         e.preventDefault();
-                        changeVolume(5);
+                        if(!isImageMode) changeVolume(5);
                         break;
                     case 'ArrowDown':
                         e.preventDefault();
-                        changeVolume(-5);
+                        if(!isImageMode) changeVolume(-5);
                         break;
                 }
             });
@@ -1814,3 +2024,5 @@
     </script>
 </body>
 </html>
+
+
