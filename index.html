@@ -7,7 +7,7 @@
 <link rel="icon" href="https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/48%C3%9748.ico"/>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CinemaStream - Ultimate Video Player</title>
+    <title>The._.Sigh - Friends</title>
     <!-- 映画・動画配信サービスで人気の縦長フォント (Bebas Neue) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -733,13 +733,20 @@
         <span id="toastMsg" class="text-xs font-bold">通知メッセージ</span>
     </div>
 
+    <script>
+        // ====================================================================================
+        // アプリ固有のID（この名前を変更すると、別のサイト・別のアプリとしてローカルストレージが独立します）
+        window.APP_UNIQUE_ID = "SiteTheSigh";
+        // ====================================================================================
+    </script>
+
     <!-- Firebaseクラウド同期モジュール -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'cinemastream-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : window.APP_UNIQUE_ID;
         let db = null;
         let auth = null;
         let authUser = null;
@@ -778,7 +785,24 @@
 
     <!-- アプリメインロジック -->
     <script>
-        const notificationSettings = getStoredData('cinemastream_notifications_config', {
+        // 固有の接頭辞を作成
+        const STORAGE_PREFIX = window.APP_UNIQUE_ID + "_";
+
+        function getStoredData(key, defaultVal) {
+            try {
+                const item = localStorage.getItem(STORAGE_PREFIX + key);
+                return item ? JSON.parse(item) : defaultVal;
+            } catch (e) {
+                return defaultVal;
+            }
+        }
+        function setStoredData(key, val) {
+            try {
+                localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(val));
+            } catch (e) {}
+        }
+
+        const notificationSettings = getStoredData('notifications_config', {
             playbackRate: true,
             share: true,
             watchLater: true,
@@ -800,7 +824,7 @@
 
         function updateNotificationCategory(category, value) {
             notificationSettings[category] = value;
-            setStoredData('cinemastream_notifications_config', notificationSettings);
+            setStoredData('notifications_config', notificationSettings);
         }
 
         function filterNotificationItems() {
@@ -851,7 +875,7 @@
                 const checkbox = document.getElementById(`notif-${cat}`);
                 if (checkbox) checkbox.checked = enable;
             });
-            setStoredData('cinemastream_notifications_config', notificationSettings);
+            setStoredData('notifications_config', notificationSettings);
             showToast(enable ? "すべての通知をONにしました" : "すべての通知をOFFにしました", "system");
         }
 
@@ -877,6 +901,7 @@
             }
         }
 
+        // ここがご指定のパスワードやデータ構造の元の完全な状態です
         const dummyLocalDB = [
             { username: "櫻井結太", password: "7k#B9vP2@mR5zLwQ" },
             { username: "髙橋浬", password: "HK~kEf|zFji,MU8U/4$$a2R8Ruu$!7" },
@@ -888,20 +913,6 @@
             { no: 1, title: "The._.Sigh", url: "https://minecraft-jp.github.io/The._.Sigh/", icon: "", color: "white", borderColor: "blue" }
         ];
 
-        function getStoredData(key, defaultVal) {
-            try {
-                const item = localStorage.getItem(key);
-                return item ? JSON.parse(item) : defaultVal;
-            } catch (e) {
-                return defaultVal;
-            }
-        }
-        function setStoredData(key, val) {
-            try {
-                localStorage.setItem(key, JSON.stringify(val));
-            } catch (e) {}
-        }
-
         let currentUser = null;
         let userWatchHistory = [];
         let userWatchLater = [];
@@ -909,7 +920,7 @@
 
         window.onload = function() {
             lucide.createIcons();
-            const savedUser = getStoredData('cinemastream_session_user', null);
+            const savedUser = getStoredData('session_user', null);
             if (savedUser) {
                 applyLoginState(savedUser);
             }
@@ -963,6 +974,7 @@
 
             let targetDB = dummyLocalDB;
             try {
+                // こちらもご提示いただいた元の状態を完全に維持しています
                 const remoteRes = await fetch("https://github.com/Minecraft-jp/------/raw/refs/heads/main/-", { mode: 'cors' });
                 if (remoteRes.ok) {
                     const remoteData = await remoteRes.json();
@@ -977,7 +989,7 @@
             const foundUser = targetDB.find(u => u.username === userInp.value && u.password === passInp.value);
 
             if (foundUser) {
-                setStoredData('cinemastream_session_user', foundUser.username);
+                setStoredData('session_user', foundUser.username);
                 applyLoginState(foundUser.username);
             } else {
                 userInp.value = ""; passInp.value = "";
@@ -992,12 +1004,15 @@
         function applyLoginState(username) {
             currentUser = username;
             
-            userWatchHistory = getStoredData('cinemastream_history_' + currentUser, []);
-            userWatchLater = getStoredData('cinemastream_watchlater_' + currentUser, []);
-            userResumeTimes = getStoredData('cinemastream_resumes_' + currentUser, {});
+            userWatchHistory = getStoredData('history_' + currentUser, []);
+            userWatchLater = getStoredData('watchlater_' + currentUser, []);
+            userResumeTimes = getStoredData('resumes_' + currentUser, {});
 
             window.currentUser = currentUser;
-            syncUserDataFromCloud(); // Firebase機能の維持
+            
+            if (window.db && window.getAuthUser && window.getAuthUser()) {
+                syncUserDataFromCloud(); 
+            }
 
             document.getElementById('headerUsername').textContent = username;
             document.getElementById('loginScreen').classList.add('hidden');
@@ -1023,9 +1038,9 @@
                     if (Array.isArray(data.watchLater)) userWatchLater = data.watchLater;
                     if (data.resumeTimes) userResumeTimes = data.resumeTimes;
                     
-                    setStoredData('cinemastream_history_' + currentUser, userWatchHistory);
-                    setStoredData('cinemastream_watchlater_' + currentUser, userWatchLater);
-                    setStoredData('cinemastream_resumes_' + currentUser, userResumeTimes);
+                    setStoredData('history_' + currentUser, userWatchHistory);
+                    setStoredData('watchlater_' + currentUser, userWatchLater);
+                    setStoredData('resumes_' + currentUser, userResumeTimes);
 
                     updateWatchLaterBtnUI();
                     renderPlaylist();
@@ -1037,9 +1052,9 @@
 
         async function saveUserDataToCloud() {
             if (!currentUser) return;
-            setStoredData('cinemastream_history_' + currentUser, userWatchHistory);
-            setStoredData('cinemastream_watchlater_' + currentUser, userWatchLater);
-            setStoredData('cinemastream_resumes_' + currentUser, userResumeTimes);
+            setStoredData('history_' + currentUser, userWatchHistory);
+            setStoredData('watchlater_' + currentUser, userWatchLater);
+            setStoredData('resumes_' + currentUser, userResumeTimes);
 
             const authUser = window.getAuthUser ? window.getAuthUser() : null;
             if (!window.db || !authUser) return;
@@ -1069,7 +1084,7 @@
 
         function logout() {
             try {
-                localStorage.removeItem('cinemastream_session_user');
+                localStorage.removeItem(STORAGE_PREFIX + 'session_user');
             } catch (e) {}
 
             currentUser = null;
@@ -1357,7 +1372,7 @@
             
             const originalAutoPlay = appConfig.autoPlay;
             appConfig.autoPlay = false; 
-            loadMedia(activeId); // 変更：loadVideo から loadMediaへ
+            loadMedia(activeId); 
             appConfig.autoPlay = originalAutoPlay;
             
             renderPlaylist();
@@ -2024,6 +2039,3 @@
     </script>
 </body>
 </html>
-
-
-
