@@ -442,7 +442,7 @@
 
         <footer id="mainFooter" class="bg-brandHeader border-t border-brandBorder py-6 mt-8 transition-all duration-500">
             <div class="max-w-7xl mx-auto px-4 text-center space-y-1">
-                <p class="text-xs text-brandMuted">&copy; 2026 GVN Organization <a href="https://minecraft-jp.github.io/GVN-Organization/" target="_blank" class="gradient underline font-bold hover:opacity-80 transition-opacity">©︎GVN ORG</a></p>
+                <p class="text-xs text-brandMuted">&copy;  2026 GVN Organization - <a href="https://minecraft-jp.github.io/GVN-Organization/" target="_blank" class="gradient underline font-bold hover:opacity-80 transition-opacity">GVN ORG</a></p>
             </div>
         </footer>
     </div>
@@ -1319,33 +1319,7 @@
 
         // ================= データ構造 (動画と画像の混在) =================
         const videos = [
-            { id: 1, 
-                type: "video",
-                title: "友達のちんぽ(第一弾)", 
-                url: "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/video-output-3D6FB81D-6A3E-4440-8107-77FF0486D51A-1.mov", 
-                thumbnail: "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/photo-output.png", 
-                duration: "0:25", 
-                date: "2026/07/28", 
-                desc: "友達が管理者の服を脱がそうとしてきたため、逆に友達の服そ脱がせた動画。\n#jc #友達 #ちんこ #勃起 #1 " 
-            },
-            { 
-                id: 2, 
-                type: "image", 
-                title: "友達のちんぽ(第二弾)", 
-                images: [
-                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6989.png",
-                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6990.png",
-                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6991.png",
-                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6992.png",
-                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6993.png",
-                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6893.jpeg",
-                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_6895.jpeg",
-                    "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_7011.jpeg"
-                ],
-                thumbnail: "https://github.com/Minecraft-jp/Haha/raw/refs/heads/main/IMG_1223.jpeg", 
-                duration: "8枚", 
-                date: "2026/07/31", 
-                desc: "友達が管理者の服を脱がそうとしてきたため、逆に友達の服そ脱がせたお気に入り画像。\n#新機能 #写真 #友達 #勃起 #jc " }
+<link href="https://raw.githubusercontent.com/Minecraft-jp/ABC/refs/heads/main/Aaa.json"/>
         ];
 
         let activeId = 1;
@@ -1617,7 +1591,7 @@
             const finalShareUrl = `https://minecraft-jp.github.io/The._.Sigh/`;
             if (navigator.share) {
                 try {
-                    await navigator.share({ title: "Friends", text: "Friends", url: finalShareUrl });
+                    await navigator.share({ title: "Friends- GVN", text: "Friends - GVN", url: finalShareUrl });
                     showToast("共有メニューを開きました", 'share');
                 } catch (error) {}
             } else {
